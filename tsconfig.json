@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "strictNullChecks": true,
+        "module": "none",
+        "sourceMap": true,
+        "outFile": "concat.js",
+        "target": "es6"
+    },
+    "files": [
+        "src/shader.ts",
+        "src/adjacency_map.ts",
+        "src/bft.ts",
+        "src/neuron.ts",
+        "src/neuron_states/grow.ts",
+        "src/neuron_states/propogate.ts",
+        "src/main.ts"
+    ]
+}
