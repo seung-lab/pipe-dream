@@ -55,12 +55,26 @@ function recurse(neuron: PropogateNeuron) {
     });
 }
 
-Neuron.generateFromUrl("https://alexnortn.github.io/gl_test/cells/10010.ctm", 21628).then((neuron) => {
+Neuron.generateFromId("10010", 21628).then((neuron) => {
     scene.add(neuron.mesh);
 
     let cneuron : NeuronState;
 
     cneuron = new GrowNeuron(neuron);
+
+    console.log('hi');
+
+    // Generate contact spheres
+    for (let pre in neuron.conns) {
+        neuron.conns[pre].forEach((c) => {
+            let geometry = new THREE.SphereBufferGeometry(100);
+            let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+            let mesh = new THREE.Mesh( geometry, material );
+            mesh.position.set(c.centroid.x, c.centroid.y, c.centroid.z);
+
+            scene.add( mesh );
+        });
+    }
 
     (cneuron as GrowNeuron).promise.then(() => {
         cneuron = cneuron.to(PropogateNeuron);

@@ -21,7 +21,6 @@ class GrowNeuron extends NeuronState {
 
     update() {
         if (!this.active) {
-            return;
         }
 
         if (this.frontier_uniform.value < this.neuron.hopMap.max) {

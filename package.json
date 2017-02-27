@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "dependencies": {
-    "@types/three": "^0.83.4"
+    "@types/three": "^0.83.4",
+    "@types/whatwg-fetch": "0.0.33"
   },
   "devDependencies": {},
   "repository": {
