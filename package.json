@@ -1,0 +1,19 @@
+{
+  "name": "pipe-dream",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "@types/three": "^0.83.4"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seung-lab/pipe-dream.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/seung-lab/pipe-dream/issues"
+  },
+  "homepage": "https://github.com/seung-lab/pipe-dream#readme"
+}
