@@ -1,5 +1,5 @@
 interface Window {
-    n: any
+    n: NeuronState
 }
 
 let frameRate = 60;
@@ -60,8 +60,7 @@ loadShaders().then(() => {
         scene.add(neuron.mesh);
 
         let cneuron : NeuronState;
-
-        cneuron = new GrowNeuron(neuron);
+            cneuron = new GrowNeuron(neuron);
 
         // Generate contact spheres
         for (let pre in neuron.conns) {
@@ -74,6 +73,15 @@ loadShaders().then(() => {
                 scene.add( mesh );
             });
         }
+
+        // Infinite grow cycles
+        function pipeDream(gn: GrowNeuron) {
+            gn.promise.then(() => {
+                pipeDream(gn.to(GrowNeuron));
+            });
+        }
+
+        // pipeDream(new GrowNeuron(neuron));
 
         (cneuron as GrowNeuron).promise.then(() => {
             cneuron = cneuron.to(PropogateNeuron);

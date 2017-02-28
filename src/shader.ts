@@ -14,6 +14,10 @@ const Shaders = {
     propogate: {
         vertex: '',
         fragment: ''
+    },
+    static: {
+        vertex: '',
+        fragment: ''
     }
 }
 

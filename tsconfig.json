@@ -14,6 +14,7 @@
         "src/neuron.ts",
         "src/neuron_states/grow.ts",
         "src/neuron_states/propogate.ts",
+        "src/neuron_states/static.ts",
         "src/main.ts"
     ]
 }
