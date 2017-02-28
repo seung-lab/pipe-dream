@@ -1,7 +1,4 @@
-const propVecSize = 4; // vec4 for each attribute to allow 4 props per attribute
-const MAX_PROP = 40;
-
-const propAttributesCount = Math.ceil(MAX_PROP / propVecSize);
+const propAttributesCount = Math.ceil(Config.MAX_PROP / Config.PROP_VEC_SIZE);
 
 interface xyz {
     x: number;

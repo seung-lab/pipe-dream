@@ -55,50 +55,47 @@ function recurse(neuron: PropogateNeuron) {
     });
 }
 
-Neuron.generateFromId("10010", 21628).then((neuron) => {
-    scene.add(neuron.mesh);
+loadShaders().then(() => {
+    Neuron.generateFromId("10010", 21628).then((neuron) => {
+        scene.add(neuron.mesh);
 
-    let cneuron : NeuronState;
+        let cneuron : NeuronState;
 
-    cneuron = new GrowNeuron(neuron);
+        cneuron = new GrowNeuron(neuron);
 
-    console.log('hi');
+        // Generate contact spheres
+        for (let pre in neuron.conns) {
+            neuron.conns[pre].forEach((c) => {
+                let geometry = new THREE.SphereBufferGeometry(100);
+                let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+                let mesh = new THREE.Mesh( geometry, material );
+                mesh.position.set(c.centroid.x, c.centroid.y, c.centroid.z);
 
-    // Generate contact spheres
-    for (let pre in neuron.conns) {
-        neuron.conns[pre].forEach((c) => {
-            let geometry = new THREE.SphereBufferGeometry(100);
-            let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
-            let mesh = new THREE.Mesh( geometry, material );
-            mesh.position.set(c.centroid.x, c.centroid.y, c.centroid.z);
+                scene.add( mesh );
+            });
+        }
 
-            scene.add( mesh );
+        (cneuron as GrowNeuron).promise.then(() => {
+            cneuron = cneuron.to(PropogateNeuron);
+            let i = 0;
+            let interval = setInterval(() => {
+                recurse(cneuron as PropogateNeuron);
+                i++;
+
+                if (i === 40) {
+                    clearInterval(interval);
+                }
+            }, 200);
         });
-    }
 
-    (cneuron as GrowNeuron).promise.then(() => {
-        cneuron = cneuron.to(PropogateNeuron);
-        let i = 0;
-        let interval = setInterval(() => {
-            recurse(cneuron as PropogateNeuron);
-            i++;
-
-            if (i === 40) {
-                clearInterval(interval);
-            }
-        }, 200);
-    });
-
-
-
-
-    function loop() {
-        // stats.begin();
-        controls.update();
-        cneuron.update();
-        renderer.render(scene, camera);
+        function loop() {
+            // stats.begin();
+            controls.update();
+            cneuron.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(loop);
+            // stats.end();
+        }
         requestAnimationFrame(loop);
-        // stats.end();
-    }
-    requestAnimationFrame(loop);
+    });
 });

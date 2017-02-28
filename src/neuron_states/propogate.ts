@@ -2,7 +2,7 @@ class PropogateNeuron extends NeuronState {
     private propAttribArray: THREE.BufferAttribute[];
     private propogations: Propogation[];
     private propCount = 0; // used for the circular propAttribArray
-    private readonly frontiers = new Float32Array(MAX_PROP);
+    private readonly frontiers = new Float32Array(Config.MAX_PROP);
 
     private material: CellPropShaderMaterial;
 
@@ -12,7 +12,7 @@ class PropogateNeuron extends NeuronState {
 
         this.propAttribArray = [];
         for (let i = 0; i < propAttributesCount; i++) {
-            const propAttrib = new THREE.BufferAttribute(new Float32Array(this.neuron.nodeCount*propVecSize), propVecSize);
+            const propAttrib = new THREE.BufferAttribute(new Float32Array(this.neuron.nodeCount*Config.PROP_VEC_SIZE), Config.PROP_VEC_SIZE);
             this.propAttribArray.push(propAttrib);
             neuron.geometry.addAttribute(`a_backprop${i}`, propAttrib);
         }
@@ -44,13 +44,13 @@ class PropogateNeuron extends NeuronState {
     }
 
     generatePropogation(index: number) {
-        const attribNumber = Math.floor((this.propCount % MAX_PROP) / propVecSize);
+        const attribNumber = Math.floor((this.propCount % Config.MAX_PROP) / Config.PROP_VEC_SIZE);
         const propAttrib = this.propAttribArray[attribNumber];
         const start = performance.now();
-        bbft(index, this.neuron.adjacencyMap, this.neuron.hopMap.map, this.neuron.nodeCount, propAttrib.array as Float32Array, this.propCount % propVecSize);
+        bbft(index, this.neuron.adjacencyMap, this.neuron.hopMap.map, this.neuron.nodeCount, propAttrib.array as Float32Array, this.propCount % Config.PROP_VEC_SIZE);
         propAttrib.needsUpdate = true;
 
-        const propIndex = this.propCount % MAX_PROP;
+        const propIndex = this.propCount % Config.MAX_PROP;
         const frontier = this.neuron.hopMap.map[index];
         this.propCount++;
 
@@ -114,8 +114,12 @@ function createCellPropMaterial(frontierArr: Float32Array): CellPropShaderMateri
 
     return new THREE.ShaderMaterial({
         uniforms: uniforms,
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader
+        vertexShader: replaceVars(Shaders.propogate.vertex, new Map([
+            ["zcount", Config.MAX_PROP.toString()],
+            ["bpAttrString", bpAttrString],
+            ["backpropString", backpropString]
+        ])),
+        fragmentShader: Shaders.propogate.fragment
     }) as CellPropShaderMaterial;
 }
 
@@ -123,130 +127,9 @@ let bpAttrString = "";
 
 let backpropString = "";
 
-const zcount = 40;
-
 for (let i = 0; i < 10; i++) {
     bpAttrString += `\tattribute vec4 a_backprop${i};\n`;
-    for (let j = 0; j < 4; j++) {
+    for (let j = 0; j < Config.PROP_VEC_SIZE; j++) {
         backpropString += `\t\t\toffset = min(offset, abs(u_frontier[${i * 4 + j}] - a_hops) + 100000.0 * (1.0 - a_backprop${i}[${j}]));\n`;
     }
 }
-
-let vertexShader = `
-    // switch on high precision floats
-    #ifdef GL_ES
-    precision highp float;
-    precision highp int;
-    #endif
-    
-    uniform float u_frontier[${zcount}];
-    // uniform float u_max_hop;
-    uniform float u_feather;
-    
-    attribute float a_hops;
-
-${bpAttrString}
-
-    uniform vec3 u_camera_pos;
-    
-    varying vec4 v_Color;
-    varying vec3 v_From_Cam;
-    varying vec3 v_Normal;
-
-    // Remap value
-    float remap(float value, float inMin, float inMax, float outMin, float outMax) {
-        return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
-    }
-
-    void main() {
-        float amplitude = 0.0; // Create a swelling effect during signal prop
-
-        v_Normal = normal;
-        v_From_Cam = u_camera_pos - position;
-
-        float offset = 100000.0;
-
-${backpropString}
-
-        float r = 0.0;
-
-        if (offset < u_feather) {
-            r = remap(offset, 0.0, u_feather, 1.0, 0.0);
-            // amplitude = r * 100.0; // Experimentally Determined
-            // r = 1.0;
-        }
-
-        // This for discard
-        // if (a_threshold >= u_frontier) {
-        // 	r = 1.0;	
-        // }
-        
-        float b = 1.0 - r;
-
-        v_Color = vec4(r,0.0,b,1.0);
-
-        // Multiply our a_displacement by the
-        // amplitude. The amp will get animated
-        // so we'll have animated a_displacement
-        vec3 newPosition = position + 
-                            normal * 
-                            vec3(amplitude);
-
-        gl_Position = projectionMatrix *
-                        modelViewMatrix *
-                        vec4(newPosition,1.0);
-    }`;
-
-let fragmentShader = `
-    #ifdef GL_ES
-    precision highp float;
-    #endif
-    
-    // Same name and type as VS
-    varying vec4 v_Color;
-    varying vec3 v_From_Cam;
-    varying vec3 v_Normal;
-
-    void main() {
-
-        // This is for discard
-        // if (v_Color.r == 0.0) {
-        // 	discard;
-        // }
-
-
-        vec3 from_Cam = normalize(v_From_Cam);
-        vec3 light1 = vec3(1,0,0);
-        vec3 light2 = vec3(0,0.5,0);
-        
-        float cam_mult = 1.0;
-        float light1_mult = 0.75;
-        float light2_mult = 1.0;
-        
-        light1 = normalize(light1);
-        light2 = normalize(light2);
-
-        float dProdCam = max(0.0, dot(v_Normal, from_Cam));
-                // dProdCam = 1.0 - dProdCam;
-                // dProdCam = clamp(dProdCam, 0.0, 1.0);
-        
-        // Flipping the dot-product gives an edge glow effect
-        // Naturally, this will result in an emerging (dark) view
-        float dProd1 = max(0.0, dot(v_Normal, light1));
-                dProd1 = 1.0 - dProd1;
-                dProd1 = clamp(dProd1, 0.0, 1.0);
-
-        float dProd2 = max(0.0, dot(v_Normal, light2));
-                // dProd2 = 1.0 - dProd2;
-                // dProd2 = clamp(dProd2, 0.0, 1.0);
-
-        // float fragColorMix = (dProd1 + dProdCam) / 2.0;
-        float fragColorMix = clamp( ( (dProdCam * cam_mult + dProd1 * light1_mult + dProd2 * light2_mult) / 2.0 ), 0.0, 1.0 );
-                
-        // vec4 fragColor = vec4(dProd2, dProd2, dProd2, 1.0); 
-        vec4 fragColor = vec4(fragColorMix, fragColorMix, fragColorMix, 1); 
-        
-        // Feed into our frag colour
-        gl_FragColor = (v_Color * fragColor);
-        
-    }`;
