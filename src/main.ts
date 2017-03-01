@@ -1,5 +1,5 @@
 interface Window {
-    n: NeuronState
+    n: any
 }
 
 let frameRate = 60;
@@ -41,7 +41,7 @@ controls.target.set(56825.99513772479, 144964.66253099282, 146510.9148580572);
 // 	stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 // document.body.appendChild( stats.dom );
 
-function recurse(neuron: PropogateNeuron) {
+function randomFarIndex(neuron: PropogateNeuron) {
     let goodIdx = -1;
     while (true) {
         goodIdx = Math.floor(Math.random() * neuron.neuron.nodeCount);
@@ -49,45 +49,74 @@ function recurse(neuron: PropogateNeuron) {
             break;
         }
     }
+    return goodIdx;
+}
+
+function recurse(neuron: PropogateNeuron) {
+    let goodIdx = randomFarIndex(neuron);
 
     neuron.generatePropogation(goodIdx).then(() => {
         recurse(neuron);
     });
 }
 
+function loop() {
+    // stats.begin();
+    controls.update();
+
+    for (let state of NeuronState.neurons) {
+        state.update();
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+    // stats.end();
+}
+requestAnimationFrame(loop);
+
+function pipeDream(gn: GrowNeuron) {
+    gn.promise.then(() => {
+        pipeDream(gn.to(GrowNeuron));
+    });
+}
+
+window.n = (neuronId: string) => {
+    Neuron.generateFromId(neuronId, 0).then((neuron) => {
+        scene.add(neuron.mesh);
+        new StaticNeuron(neuron);
+    });
+}
+
 loadShaders().then(() => {
-    Neuron.generateFromId("10010", 21628).then((neuron) => {
+
+    window.n("10010");
+
+    Neuron.generateFromId("70014", 90174).then((neuron) => {
         scene.add(neuron.mesh);
 
-        let cneuron : NeuronState;
-            cneuron = new GrowNeuron(neuron);
+        let gneuron = new GrowNeuron(neuron);
 
         // Generate contact spheres
-        for (let pre in neuron.conns) {
-            neuron.conns[pre].forEach((c) => {
-                let geometry = new THREE.SphereBufferGeometry(100);
-                let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
-                let mesh = new THREE.Mesh( geometry, material );
-                mesh.position.set(c.centroid.x, c.centroid.y, c.centroid.z);
+        // for (let pre in neuron.conns) {
+        //     neuron.conns[pre].forEach((c) => {
+        //         let geometry = new THREE.SphereBufferGeometry(100);
+        //         let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+        //         let mesh = new THREE.Mesh( geometry, material );
+        //         mesh.position.set(c.centroid.x, c.centroid.y, c.centroid.z);
 
-                scene.add( mesh );
-            });
-        }
+        //         scene.add( mesh );
+        //     });
+        // }
 
         // Infinite grow cycles
-        function pipeDream(gn: GrowNeuron) {
-            gn.promise.then(() => {
-                pipeDream(gn.to(GrowNeuron));
-            });
-        }
 
-        // pipeDream(new GrowNeuron(neuron));
+        // pipeDream(gneuron);
 
-        (cneuron as GrowNeuron).promise.then(() => {
-            cneuron = cneuron.to(PropogateNeuron);
+        // infinite max propogations
+        gneuron.promise.then(() => {
+            let pneuron = gneuron.to(PropogateNeuron);
             let i = 0;
             let interval = setInterval(() => {
-                recurse(cneuron as PropogateNeuron);
+                recurse(pneuron);
                 i++;
 
                 if (i === 40) {
@@ -95,44 +124,5 @@ loadShaders().then(() => {
                 }
             }, 200);
         });
-
-        function loop() {
-            // stats.begin();
-            controls.update();
-            cneuron.update();
-            renderer.render(scene, camera);
-            requestAnimationFrame(loop);
-            // stats.end();
-        }
-        requestAnimationFrame(loop);
-
-
-        // click trigger backprop from selected vertex
-        {
-            const raycaster = new THREE.Raycaster();
-            const mouse = new THREE.Vector2();
-
-            addEventListener('click', ({clientX, clientY, shiftKey}) => {
-                if (!shiftKey) {
-                    return;
-                }
-
-                mouse.x = clientX / WIDTH * 2 - 1;
-                mouse.y = -clientY / HEIGHT * 2 + 1;
-
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(scene.children);
-
-                if (intersects.length) {
-                    const {faceIndex} = intersects[0];
-                    // TODO, check .object to figure out which neuron
-
-                    const vertex1 = neuron.geometry.index.array[faceIndex * 3]; // choose one of the vertices from the selected face
-
-                    console.log('new root', vertex1);
-                    neuron.changeRoot(vertex1);
-                }
-            });
-        }
     });
 });

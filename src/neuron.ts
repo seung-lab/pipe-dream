@@ -72,22 +72,3 @@ class Neuron {
     }
 }
 
-class NeuronState {
-    neuron: Neuron;
-    protected active = true;
-
-    constructor(neuron: Neuron) {
-        this.neuron = neuron;
-    }
-
-    to<T extends NeuronState>(c: {new(neuron: Neuron): T; }): T { // TODO, is there a way to use typeof T here?
-        this.cleanup();
-        return new c(this.neuron);
-    }
-
-    update() {}
-
-    cleanup() {
-        this.active = false;
-    }
-}
