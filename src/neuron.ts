@@ -30,12 +30,17 @@ class Neuron {
         this.geometry = geometry;
         this.adjacencyMap = createAdjacencyMap(geometry.index.array as Uint32Array);
         this.nodeCount = geometry.getAttribute('position').count;
-        this.hopMap = bft(root, this.adjacencyMap, this.nodeCount);
-        geometry.addAttribute('a_hops', new THREE.BufferAttribute(this.hopMap.map, 1));
+        this.changeRoot(root);
         this.id = id;
         this.conns = conns;
 
         this.mesh = new THREE.Mesh(geometry);
+    }
+
+    changeRoot(root: number) {
+        this.hopMap = bft(root, this.adjacencyMap, this.nodeCount);
+        this.geometry.removeAttribute('a_hops');
+        this.geometry.addAttribute('a_hops', new THREE.BufferAttribute(this.hopMap.map, 1));
     }
 
     static generateFromId(id: string, root: number): Promise<Neuron> {

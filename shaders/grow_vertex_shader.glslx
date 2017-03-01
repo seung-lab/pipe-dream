@@ -29,20 +29,17 @@ void main() {
     v_Normal = normal;
     v_From_Cam = u_camera_pos - position;
 
-    float r = 0.0;
+    float b = 0.0;
 
     if (u_frontier > a_hops) {
-        r = 1.0;
+        b = 1.0;
     }
 
     if (a_hops < 0.0) {
-        r = 0.0;
+        b = 0.0;
     }
 
-    
-    float b = 1.0 - r;
-
-    v_Color = vec4(b,0,r,1.0);
+    v_Color = vec4(0.0,0.0,b,1.0);
 
     // Multiply our a_displacement by the
     // amplitude. The amp will get animated

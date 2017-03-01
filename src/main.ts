@@ -105,5 +105,34 @@ loadShaders().then(() => {
             // stats.end();
         }
         requestAnimationFrame(loop);
+
+
+        // click trigger backprop from selected vertex
+        {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            addEventListener('click', ({clientX, clientY, shiftKey}) => {
+                if (!shiftKey) {
+                    return;
+                }
+
+                mouse.x = clientX / WIDTH * 2 - 1;
+                mouse.y = -clientY / HEIGHT * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(scene.children);
+
+                if (intersects.length) {
+                    const {faceIndex} = intersects[0];
+                    // TODO, check .object to figure out which neuron
+
+                    const vertex1 = neuron.geometry.index.array[faceIndex * 3]; // choose one of the vertices from the selected face
+
+                    console.log('new root', vertex1);
+                    neuron.changeRoot(vertex1);
+                }
+            });
+        }
     });
 });
