@@ -7,6 +7,7 @@
         "target": "es6"
     },
     "files": [
+        "src/utils.ts",
         "src/config.ts",
         "src/shader.ts",
         "src/adjacency_map.ts",

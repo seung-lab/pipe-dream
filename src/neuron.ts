@@ -1,12 +1,7 @@
 const propAttributesCount = Math.ceil(Config.MAX_PROP / Config.PROP_VEC_SIZE);
 
-interface xyz {
-    x: number;
-    y: number;
-    z: number;
-}
-
 interface contact {
+    vertex: number;
     centroid: xyz;
     area: xyz;
     post: xyz;
@@ -44,15 +39,32 @@ class Neuron {
     }
 
     static generateFromId(id: string, root: number): Promise<Neuron> {
-        let connsPromise: Promise<contacts> = fetch(`../data/conns-${id}.json`) // Check if this data exists...
+        function generateConns(geo:THREE.BufferGeometry) {
+            return fetch(`../data/conns-${id}.json`) // Check if this data exists...
             .then(function(response) {
                 return response.json();
             })
             .then(function(data: Object) {
+                // transform data -> contacts; map => vertex:id
+                // this needs to be significantly faster! (~3.5m -> 100ms)
+                // two options: either downsample 
+                let cellT = performance.now();
+                let count = 0;                
+                for (let cell in data) {
+                    let now = performance.now();
+                    data[cell].forEach((contact) => { 
+                        count++;
+                        contact['vertex'] = find_root(geo.getAttribute('position').array as Float32Array, contact.post); 
+                        console.log("found contact ", count, contact[id], "in", (performance.now() - now));
+                    });
+                }
+                console.log('cell contacts complete in ', (performance.now() - cellT));
+
                 return data as contacts;
-            }).catch(() => {
-                console.log('meow');
+            }).catch((reason) => {
+                console.log(reason);
             });
+        }
 
         let geometryPromise: Promise<THREE.BufferGeometry> = new Promise((f, r) => {
             const url = `http://museum.eyewire.org/1.0/mesh/${id}`;
@@ -64,11 +76,14 @@ class Neuron {
                 useWorker: true,
                 worker: new Worker("./third_party/ctm/CTMWorker.js")
             });
-        }); 
+        });
 
-        return Promise.all([connsPromise, geometryPromise]).then(([conns, geo]) => {
-            return new Neuron(id, geo, root, conns);
+        return  geometryPromise.then((geo) => {
+            return generateConns(geo).then((conns) => {
+                return new Neuron(id, geo, root, conns!);
+            });
         })
+
     }
 }
 

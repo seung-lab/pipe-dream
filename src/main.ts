@@ -62,6 +62,8 @@ loadShaders().then(() => {
         let cneuron : NeuronState;
             cneuron = new GrowNeuron(neuron);
 
+            window.n = cneuron;
+
         // Generate contact spheres
         for (let pre in neuron.conns) {
             neuron.conns[pre].forEach((c) => {
