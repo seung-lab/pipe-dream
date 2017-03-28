@@ -4,6 +4,11 @@ interface Window {
 
 let frameRate = 60;
 
+// Base URL for gcloud contacts data
+const connsURL = "https://storage.googleapis.com/pipe-dream/e2198-museum-conns/";
+const connsListURL = "https://storage.googleapis.com/pipe-dream/e2198-museum-conns/conns-list.json";
+let   connsList = [];
+
 // Set the scene size.
 const WIDTH = window.innerWidth;
 const HEIGHT = window.innerHeight;
@@ -86,14 +91,16 @@ window.n = (neuronId: string) => {
     });
 }
 
-loadShaders().then(() => {
-
-    window.n("10010");
-
-    Neuron.generateFromId("70014", 90174).then((neuron) => {
+loadConnsList()
+.then((loadShaders))
+.then(() => {
+    Neuron.generateFromId("20213", 16283).then((neuron) => {
         scene.add(neuron.mesh);
 
-        let gneuron = new GrowNeuron(neuron);
+        // let pneuron = new PropogateNeuron(neuron);
+        let sneuron = new SynapseNeuron(neuron);
+
+        // window.n = pneuron;
 
         // Generate contact spheres
         // for (let pre in neuron.conns) {
@@ -105,24 +112,35 @@ loadShaders().then(() => {
 
         //         scene.add( mesh );
         //     });
+        //     break;
         // }
+
+        // let c = neuron.conns[10013][2];
+        // let geometry = new THREE.SphereBufferGeometry(1000);
+        // let material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+        // let mesh = new THREE.Mesh( geometry, material );
+        // mesh.position.set(c.centroid.x, c.centroid.y, c.centroid.z);
+
+        // scene.add( mesh );
+
+        // pneuron.generatePropogation(175455);
 
         // Infinite grow cycles
 
         // pipeDream(gneuron);
 
         // infinite max propogations
-        gneuron.promise.then(() => {
-            let pneuron = gneuron.to(PropogateNeuron);
-            let i = 0;
-            let interval = setInterval(() => {
-                recurse(pneuron);
-                i++;
+        // gneuron.promise.then(() => {
+        //     let pneuron = gneuron.to(PropogateNeuron);
+        //     let i = 0;
+        //     let interval = setInterval(() => {
+        //         recurse(pneuron);
+        //         i++;
 
-                if (i === 40) {
-                    clearInterval(interval);
-                }
-            }, 200);
-        });
+        //         if (i === 40) {
+        //             clearInterval(interval);
+        //         }
+        //     }, 200);
+        // });
     });
 });

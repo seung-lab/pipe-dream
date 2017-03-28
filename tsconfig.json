@@ -16,7 +16,9 @@
         "src/neuron_states/grow.ts",
         "src/neuron_states/propogate.ts",
         "src/neuron_states/static.ts",
+        "src/neuron_states/synapse.ts",
         "src/main.ts",
-        "src/click.ts"
+        "src/click.ts",
+        "src/data.ts"
     ]
 }

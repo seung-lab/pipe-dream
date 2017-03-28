@@ -11,6 +11,7 @@ interface contact {
     area: xyz;
     post: xyz;
     pre: xyz;
+    vertex: number;
 }
 
 interface contacts {
@@ -44,12 +45,15 @@ class Neuron {
     }
 
     static generateFromId(id: string, root: number): Promise<Neuron> {
-        let connsPromise: Promise<contacts> = fetch(`../data/conns-${id}.json`) // Check if this data exists...
+        // Check conns-list for id
+        const url = connsURL + `conns-${id}.json`;
+        let connsPromise: Promise<contacts> = fetch(url) // Check if this data exists...
             .then(function(response) {
                 return response.json();
             })
             .then(function(data: Object) {
                 return data as contacts;
+                // need to flatten contacts
             }).catch(() => {
                 console.log('meow');
             });

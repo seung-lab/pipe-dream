@@ -18,6 +18,10 @@ const Shaders = {
     static: {
         vertex: '',
         fragment: ''
+    },
+    synapse: {
+        vertex: '',
+        fragment: ''
     }
 }
 
